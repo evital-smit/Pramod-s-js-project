@@ -1,25 +1,21 @@
 const Booking = require("../models/bookingModel");
 const BookingDetails = require("../models/bookingDetailsModel");
+const validateRequest = require('../middleware/validateRequest');
+const bookingSchemas = require('../validations/bookingValidations');
+const bookingDetailSchemas = require('../validations/bookingDetailsValidations');
 
-const allowedBookingStatuses = ["CONFIRMED", "CANCELLED"];
-const validGenders = ["Male", "Female", "Other"];
-const validDetailStatuses = ["CONFIRMED", "CANCELLED"];
-
-
-exports.createBooking = async (req, res) => {
-    try {
-        const { user_id, flight_id, booking_status } = req.body;
-
-        if (!allowedBookingStatuses.includes(booking_status)) {
-            return res.status(400).json({ error: "Invalid booking_status. Allowed values: CONFIRMED, CANCELLED" });
+exports.createBooking = [
+    validateRequest(bookingSchemas.createBookingSchema),
+    async (req, res) => {
+        try {
+            const { user_id, flight_id, booking_status } = req.body;
+            const newBooking = await Booking.create(user_id, flight_id, booking_status);
+            res.status(201).json(newBooking);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
         }
-
-        const newBooking = await Booking.create(user_id, flight_id, booking_status);
-        res.status(201).json(newBooking);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
     }
-};
+];
 
 exports.getAllBookings = async (req, res) => {
     try {
@@ -32,7 +28,7 @@ exports.getAllBookings = async (req, res) => {
 
 exports.getBookingById = async (req, res) => {
     try {
-        const booking = await Booking.getById(req.params.id);
+        const booking = await Booking.getById(req.body.id);
         if (!booking) {
             return res.status(404).json({ error: "Booking not found" });
         }
@@ -42,27 +38,25 @@ exports.getBookingById = async (req, res) => {
     }
 };
 
-exports.updateBooking = async (req, res) => {
-    try {
-        const { booking_status } = req.body;
-
-        if (!allowedBookingStatuses.includes(booking_status)) {
-            return res.status(400).json({ error: "Invalid booking_status. Allowed values: CONFIRMED, CANCELLED" });
+exports.updateBooking = [
+    validateRequest(bookingSchemas.updateBookingSchema),
+    async (req, res) => {
+        try {
+            const { booking_status } = req.body;
+            const updatedBooking = await Booking.update(req.params.id, booking_status);
+            if (!updatedBooking) {
+                return res.status(404).json({ error: "Booking not found" });
+            }
+            res.status(200).json(updatedBooking);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
         }
-
-        const updatedBooking = await Booking.update(req.params.id, booking_status);
-        if (!updatedBooking) {
-            return res.status(404).json({ error: "Booking not found" });
-        }
-        res.status(200).json(updatedBooking);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
     }
-};
+];
 
 exports.deleteBooking = async (req, res) => {
     try {
-        const deletedBooking = await Booking.delete(req.params.id);
+        const deletedBooking = await Booking.delete(req.body.id);
         if (!deletedBooking) {
             return res.status(404).json({ error: "Booking not found" });
         }
@@ -72,24 +66,18 @@ exports.deleteBooking = async (req, res) => {
     }
 };
 
-exports.createBookingDetail = async (req, res) => {
-    try {
-        const { booking_id, seat_id, passenger_name, age, gender, relation, status } = req.body;
-
-        if (!validGenders.includes(gender)) {
-            return res.status(400).json({ error: "Invalid gender. Choose from Male, Female, Other." });
+exports.createBookingDetail = [
+    validateRequest(bookingDetailSchemas.createBookingDetailSchema),
+    async (req, res) => {
+        try {
+            const { booking_id, seat_id, passenger_name, age, gender, relation, status } = req.body;
+            const newBookingDetail = await BookingDetails.create(booking_id, seat_id, passenger_name, age, gender, relation, status);
+            res.status(201).json(newBookingDetail);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
         }
-
-        if (status && !validDetailStatuses.includes(status)) {
-            return res.status(400).json({ error: "Invalid status. Choose from CONFIRMED, CANCELLED." });
-        }
-
-        const newBookingDetail = await BookingDetails.create(booking_id, seat_id, passenger_name, age, gender, relation, status);
-        res.status(201).json(newBookingDetail);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
     }
-};
+];
 
 exports.getBookingDetails = async (req, res) => {
     try {
@@ -113,29 +101,26 @@ exports.getBookingDetailsByBookingId = async (req, res) => {
     }
 };
 
-exports.updateBookingStatus = async (req, res) => {
-    try {
-        const { booking_detail_id } = req.params;
-        const { status } = req.body;
-
-        if (!validDetailStatuses.includes(status)) {
-            return res.status(400).json({ error: "Invalid status. Choose from CONFIRMED, CANCELLED." });
+exports.updateBookingStatus = [
+    validateRequest(bookingDetailSchemas.updateBookingDetailSchema),
+    async (req, res) => {
+        try {
+            const { booking_detail_id } = req.body;
+            const { status } = req.body;
+            const updatedBookingDetail = await BookingDetails.updateStatus(booking_detail_id, status);
+            if (!updatedBookingDetail) {
+                return res.status(404).json({ error: "Booking detail not found" });
+            }
+            res.json(updatedBookingDetail);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
         }
-
-        const updatedBookingDetail = await BookingDetails.updateStatus(booking_detail_id, status);
-        if (!updatedBookingDetail) {
-            return res.status(404).json({ error: "Booking detail not found" });
-        }
-
-        res.json(updatedBookingDetail);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
     }
-};
+];
 
 exports.deleteBookingDetail = async (req, res) => {
     try {
-        const { booking_detail_id } = req.params;
+        const { booking_detail_id } = req.body;
         const deletedBookingDetail = await BookingDetails.delete(booking_detail_id);
         if (!deletedBookingDetail) {
             return res.status(404).json({ error: "Booking detail not found" });
