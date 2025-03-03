@@ -1,11 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const paymentsController = require('../controllers/paymentsController')
+const authMiddleware = require('../middleware/authMiddleware');
+const validateRequest = require('../middleware/validateRequest');
+const paymentsController = require('../controllers/paymentsController');
+const {
+    createPaymentSchema,
+    updatePaymentStatusSchema
+} = require('../validations/paymentValidations');
 
-router.post('/', paymentsController.createPayment);
+router.use(authMiddleware);
+
+router.post('/', validateRequest(createPaymentSchema), paymentsController.createPayment);
 router.get('/:payment_id', paymentsController.getPaymentById);
 router.get('/user/:user_id', paymentsController.getPaymentsByUser);
-router.put('/:payment_id', paymentsController.updatePaymentStatus);
+router.put('/:payment_id', validateRequest(updatePaymentStatusSchema), paymentsController.updatePaymentStatus);
 router.delete('/:payment_id', paymentsController.deletePayment);
 
 module.exports = router;

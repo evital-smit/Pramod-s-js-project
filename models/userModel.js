@@ -8,24 +8,18 @@ const User = {
         );
         return result.rows[0];
     },
-
+    
     findByEmail: async (email) => {
-        const result = await pool.query(
-            "SELECT * FROM Users WHERE email = $1",
-            [email]
-        );
+        const result = await pool.query("SELECT * FROM Users WHERE email = $1", [email]);
         return result.rows[0];
     },
-
+    
     updatePassword: async (user_id, newPassword) => {
-        await pool.query('UPDATE users SET password = $1 WHERE user_id = $2', [newPassword, user_id]);
+        await pool.query('UPDATE Users SET password_hash = $1 WHERE user_id = $2', [newPassword, user_id]);
     },
 
     findById: async (user_id) => {
-        const result = await pool.query(
-            "SELECT user_id, name, age, gender, email, phone FROM Users WHERE user_id = $1",
-            [user_id]
-        );
+        const result = await pool.query("SELECT user_id, name, age, gender, email, phone FROM Users WHERE user_id = $1", [user_id]);
         return result.rows[0];
     },
 
@@ -38,10 +32,7 @@ const User = {
     },
 
     deleteUser: async (user_id) => {
-        const result = await pool.query(
-            "DELETE FROM Users WHERE user_id = $1 RETURNING *",
-            [user_id]
-        );
+        const result = await pool.query("DELETE FROM Users WHERE user_id = $1 RETURNING *", [user_id]);
         return result.rows[0];
     }
 };

@@ -30,6 +30,18 @@ const Seats = {
     delete: async (seat_id) => {
         const result = await pool.query("DELETE FROM Seats WHERE seat_id = $1 RETURNING *", [seat_id]);
         return result.rows[0];
+    },
+
+    async getAvailableSeats(flight_id) {
+        try {
+            const result = await pool.query(
+                "SELECT * FROM Seats WHERE flight_id = $1 AND is_booked = false",
+                [flight_id]
+            );
+            return result.rows;
+        } catch (error) {
+            throw new Error(error.message);
+        }
     }
 };
 

@@ -31,6 +31,14 @@ const FlightRoute = {
     delete: async (route_id) => {
         const result = await pool.query("DELETE FROM FlightRoutes WHERE route_id = $1 RETURNING *", [route_id]);
         return result.rows[0];
+    },
+
+    searchByRouteAndClass: async (departure_city, arrival_city, flight_class) => {
+        const result = await pool.query(
+            "SELECT * FROM FlightRoutes WHERE departure_city = $1 AND arrival_city = $2 AND flight_class = $3",
+            [departure_city, arrival_city, flight_class]
+        );
+        return result.rows;
     }
 };
 
